@@ -1,16 +1,212 @@
 /* src/app/globals.css */
-
 body {
   margin: 0;
-  padding: 0;
+  padding: 40px 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f4f4f4; /* 背景色を少しグレーに */
+  background-color: #f4f4f4;
+  display: flex;
+  justify-content: center;
 }
 
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+
+.resume-container {
+  width: 840px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  padding: 30px;
+  border: none;
+}
+
+/* --- ヘッダー --- */
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.title-row h1 { margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 0.5em; }
+
+/* --- 共通セル --- */
+.cell {
+  border: 1px solid #999;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.cell label {
+  position: absolute; top: 2px; left: 6px;
+  font-size: 11px; color: #333;
+}
+
+/* --- 単一の太枠 --- */
+.profile-grid, .history-grid, .free-text-grid {
+  border: 2px solid #000;
+  display: grid;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.profile-grid { margin-top: 0; }
+.profile-grid .cell, .history-grid .cell, .free-text-grid .cell {
+  margin: -1px 0 0 -1px; border-width: 1px;
+}
+
+/* --- 個人情報グリッド --- */
+.profile-grid {
+  grid-template-columns: 80px 1fr 80px 1fr 140px;
+  grid-template-rows: repeat(6, auto);
+}
+.profile-grid .cell { min-height: 40px; }
+
+.p-furigana-label { grid-column: 1 / 2; grid-row: 1 / 2; }
+.p-furigana-value { grid-column: 2 / 5; grid-row: 1 / 2; }
+.p-name-label     { grid-column: 1 / 2; grid-row: 2 / 3; }
+.p-name-value     { grid-column: 2 / 3; grid-row: 2 / 3; }
+.p-birthdate-value{ grid-column: 3 / 5; grid-row: 2 / 3; }
+.p-address-label  { grid-column: 1 / 2; grid-row: 4 / 5; }
+.p-address-value  { grid-column: 2 / 5; grid-row: 4 / 5; }
+.p-contact-label  { grid-column: 1 / 2; grid-row: 5 / 6; }
+.p-contact-value  { grid-column: 2 / 5; grid-row: 5 / 6; }
+.p-tel-label      { grid-column: 1 / 2; grid-row: 6 / 7; }
+.p-tel-value      { grid-column: 2 / 3; grid-row: 6 / 7; }
+.p-email-label    { grid-column: 3 / 4; grid-row: 6 / 7; }
+.p-email-value    { grid-column: 4 / 5; grid-row: 6 / 7; }
+.p-photo          { grid-column: 5 / 6; grid-row: 1 / 6; justify-content: center; align-items: center; text-align: center; font-size: 12px; color: #777; }
+
+.p-name-value { min-height: 50px; }
+.p-address-value, .p-contact-value { min-height: 50px; }
+
+.horizontal-value {
+  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
+  gap: 1em; white-space: nowrap;
+}
+.p-birthdate-value { font-size: 14px; gap: 0.6em; }
+
+/* 氏名は常に大文字（入力時／印刷時とも） */
+.name-uppercase { text-transform: uppercase; }
+
+/* --- 学歴・職歴 & 免許・資格 --- */
+.history-grid { grid-template-columns: 80px 60px 1fr; }
+.history-grid .cell { min-height: 38px; padding-left: 1em; }
+
+/* ヘッダセル */
+.history-grid .cell[class*="-h"] {
+  justify-content: center; align-items: center;
+  font-weight: bold; background-color: #f7f7f7;
+  letter-spacing: 0.5em; padding-left: 0;
+}
+
+/* 説明セルは左寄せがデフォルト */
+.history-grid .h-desc { align-items: flex-start; text-align: left; }
+
+/* 「以上」は右寄せ（入力時／印刷時とも） */
+.history-grid .h-desc.end-marker {
+  align-items: flex-end; text-align: right; padding-right: 1em;
+}
+
+/* 年・月は中央寄せ */
+.history-grid .h-year, .history-grid .h-month {
+  align-items: center; justify-content: center; padding-left: 0;
+}
+
+/* --- 志望動機 & 本人希望欄 --- */
+.free-text-grid { grid-template-columns: 1fr; }
+.free-text-grid .f-header {
+  font-weight: bold; background-color: #f7f7f7;
+  justify-content: center; align-items: center; min-height: 38px;
+}
+.free-text-grid .f-content { min-height: 150px; align-items: flex-start; }
+
+/* --- 編集UI --- */
+[contentEditable="true"] {
+  outline: none; transition: background-color 0.2s ease-in-out;
+  padding: 4px 8px; margin: -4px -8px;
+}
+[contentEditable="true"]:hover { background-color: #f0f8ff; }
+[contentEditable="true"]:focus { background-color: #e6f2ff; box-shadow: inset 0 0 0 2px #4a90e2; }
+[contentEditable="true"]:empty::before { content: attr(data-placeholder); color: #aaa; pointer-events: none; }
+.date-field > [contentEditable="true"]:empty::before { content: ' '; }
+
+.row-controls {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  display: none; gap: 4px; align-items: center;
+}
+.history-grid .cell:hover .row-controls, .dynamic-row:hover .row-controls { display: flex; }
+.control-btn {
+  width: 22px; height: 22px; border-radius: 50%; border: 1px solid #ccc;
+  background-color: #fff; color: #555; display: flex; justify-content: center; align-items: center;
+  cursor: pointer; font-size: 16px; line-height: 1; transition: all 0.2s;
+}
+.control-btn:hover { border-color: #999; transform: scale(1.1); }
+.control-btn.add-btn { background-color: #e6f2ff; color: #4a90e2; }
+.control-btn.delete-btn { background-color: #fed7d7; color: #e53e3e; }
+
+/* 固定フォントサイズ */
+.single-line-input { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
+
+.download-btn {
+  padding: 10px 20px; font-size: 16px; cursor: pointer;
+  background-color: #007bff; color: #fff; border: none; border-radius: 5px; transition: background-color 0.3s;
+}
+.download-btn:hover { background-color: #0056b3; }
+
+/* --- 印刷 --- */
+@media print {
+  .page-header, .download-btn, .row-controls { display: none !important; }
+  .resume-container { box-shadow: none !important; }
+  .p-birthdate-value { font-size: 12px !important; gap: 0.5em !important; }
+  /* 大文字化は印刷時も維持（継承されるが念のため） */
+  .name-uppercase { text-transform: uppercase !important; }
+  .ai-controls { display: none !important; }
+}
+/* src/app/globals.css の末尾に追記 */
+
+/* --- AI生成機能のスタイル --- */
+.ai-controls {
+  padding: 10px;
+  border-top: 1px solid #999;
+  background-color: #f7f7f7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.ai-keyword-input {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.ai-generate-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+.ai-generate-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+.ai-generate-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+.ai-error-message {
+  width: 100%;
+  color: #dc3545;
+  font-size: 12px;
+  margin: 0;
 }
