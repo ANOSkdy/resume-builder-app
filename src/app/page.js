@@ -1,48 +1,88 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState, useId } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import ResumePreview from '@/components/ResumePreview';
+import { useResumeStore } from '@/store/resumeStore';
 
 export default function Home() {
-  const componentRef = useRef(null);
+  // ← v3の新API: contentRef を渡す
+  const contentRef = useRef(null);
 
-  // あなたのご指摘通り、v3の正しいAPIである`contentRef`プロパティを使用してフックを初期化します
+  const fileInputId = useId();
+  const { updatePhotoUrl } = useResumeStore();
+
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    // 画面に出たら有効化
+    if (contentRef.current) setIsReady(true);
+  }, []);
+
+  // v3: contentRef を直接渡す（content: () => ... は使わない）
   const handlePrint = useReactToPrint({
-    contentRef: componentRef,
+    contentRef,
     documentTitle: '履歴書',
-    onAfterPrint: () => alert('PDFの保存が完了しました。'),
+    onAfterPrint: () => {
+      // ここは任意
+      // alert('PDFの保存が完了しました。');
+    },
     removeAfterPrint: true,
   });
-  
-  // 参照が確立され、印刷準備が整ったことを示す状態
-  const [isReady, setIsReady] = useState(false);
 
-  // コンポーネントがマウントされた後に一度だけ実行し、参照を確立します
-  useEffect(() => {
-    // componentRef.currentに値が設定された後（つまり描画後）にisReadyをtrueにします
-    if (componentRef.current) {
-      setIsReady(true);
+  // 画像選択 → Base64化 → store へ保存
+  const onPickPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください。');
+      e.target.value = '';
+      return;
     }
-    // このeffectはコンポーネントの初回マウント時に一度だけ実行されます
-  }, []);
+    const reader = new FileReader();
+    reader.onload = () => {
+      updatePhotoUrl(reader.result); // Base64 Data URL
+      e.target.value = ''; // 同じファイル再選択でも change を発火させる
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <main>
       <header className="page-header" style={{ padding: '20px', textAlign: 'center' }}>
-        <h1>WYSIWYG AI履歴書ジェネレーター</h1>
-        {/* isReadyがtrueになるまでボタンを無効化することで、参照がnullのままクリックされるのを防ぎます */}
-        <button
-          onClick={handlePrint}
-          className="download-btn"
-          disabled={!isReady} 
-        >
-          {isReady ? 'PDFダウンロード' : '準備中...'}
-        </button>
+        <h1 style={{ margin: 0 }}>AI履歴書</h1>
+
+        {/* ヘッダーの操作ボタン群（PDFと同じ配色） */}
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>
+          {/* 写真を選択（PDFボタンの横） */}
+          <button
+            type="button"
+            className="download-btn"
+            onClick={() => document.getElementById(fileInputId).click()}
+          >
+            写真を選択
+          </button>
+          <input
+            id={fileInputId}
+            type="file"
+            accept="image/*"
+            onChange={onPickPhoto}
+            style={{ display: 'none' }}
+          />
+
+          {/* PDFダウンロード */}
+          <button
+            onClick={handlePrint}
+            className="download-btn"
+            disabled={!isReady}
+          >
+            {isReady ? 'PDFダウンロード' : '準備中...'}
+          </button>
+        </div>
       </header>
+
+      {/* 印刷対象 */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        {/* 印刷対象のコンポーネントにrefを渡します */}
-        <ResumePreview ref={componentRef} />
+        <ResumePreview ref={contentRef} />
       </div>
     </main>
   );

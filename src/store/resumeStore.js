@@ -1,5 +1,4 @@
 // src/store/resumeStore.js
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,51 +16,100 @@ const initialResumeData = {
   },
   histories: [
     { id: uuidv4(), type: 'header', year: '', month: '', description: '学 歴' },
-    { id: uuidv4(), type: 'entry', year: '', month: '', description: '' },
+    { id: uuidv4(), type: 'entry',  year: '', month: '', description: '' },
     { id: uuidv4(), type: 'header', year: '', month: '', description: '職 歴' },
-    { id: uuidv4(), type: 'entry', year: '', month: '', description: '' },
+    { id: uuidv4(), type: 'entry',  year: '', month: '', description: '' },
     { id: uuidv4(), type: 'footer', year: '', month: '', description: '以 上' },
   ],
-  licenses: [
-    { id: uuidv4(), year: '', month: '', description: '' },
-  ],
-  // ▼▼▼ 修正箇所 ▼▼▼
+  licenses: [{ id: uuidv4(), year: '', month: '', description: '' }],
+
+  // テキスト欄
   motivation: '',
-  selfPromotion: '', // 自己PRを分離
+  selfPromotion: '',
   requests: '',
-  // ▲▲▲ 修正箇所 ▲▲▲
+
+  // 証明写真（Base64 Data URL を想定）
+  photoUrl: '',
 };
 
 export const useResumeStore = create(
   persist(
     (set) => ({
       ...initialResumeData,
-      // ... (profile, date, birthdateの更新アクションは変更なし)
-      updateProfile: (field, value) => set((state) => ({ profile: { ...state.profile, [field]: value } })),
-      updateDate: (field, value) => set((state) => ({ profile: { ...state.profile, date: { ...state.profile.date, [field]: value } } })),
-      updateBirthdate: (field, value) => set((state) => ({ profile: { ...state.profile, birthdate: { ...state.profile.birthdate, [field]: value } } })),
 
-      // ... (histories, licensesの更新アクションは変更なし)
-      updateHistory: (id, field, value) => set((state) => ({ histories: state.histories.map((h) => (h.id === id ? { ...h, [field]: value } : h)) })),
-      addHistory: (index) => set((state) => {
-        const newHistories = [...state.histories];
-        newHistories.splice(index, 0, { id: uuidv4(), type: 'entry', year: '', month: '', description: '' });
-        return { histories: newHistories };
-      }),
-      deleteHistory: (id) => set((state) => ({ histories: state.histories.filter((h) => h.id !== id) })),
-      updateLicense: (id, field, value) => set((state) => ({ licenses: state.licenses.map((l) => (l.id === id ? { ...l, [field]: value } : l)) })),
-      addLicense: (index) => set((state) => {
-        const newLicenses = [...state.licenses];
-        newLicenses.splice(index, 0, { id: uuidv4(), year: '', month: '', description: '' });
-        return { licenses: newLicenses };
-      }),
-      deleteLicense: (id) => set((state) => ({ licenses: state.licenses.filter((l) => l.id !== id) })),
-      
-      // ▼▼▼ 修正箇所 ▼▼▼
+      // --- profile / date / birthdate
+      updateProfile: (field, value) =>
+        set((state) => ({ profile: { ...state.profile, [field]: value } })),
+      updateDate: (field, value) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            date: { ...state.profile.date, [field]: value },
+          },
+        })),
+      updateBirthdate: (field, value) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            birthdate: { ...state.profile.birthdate, [field]: value },
+          },
+        })),
+
+      // --- histories
+      updateHistory: (id, field, value) =>
+        set((state) => ({
+          histories: state.histories.map((h) =>
+            h.id === id ? { ...h, [field]: value } : h
+          ),
+        })),
+      addHistory: (index) =>
+        set((state) => {
+          const newHistories = [...state.histories];
+          newHistories.splice(index, 0, {
+            id: uuidv4(),
+            type: 'entry',
+            year: '',
+            month: '',
+            description: '',
+          });
+          return { histories: newHistories };
+        }),
+      deleteHistory: (id) =>
+        set((state) => ({
+          histories: state.histories.filter((h) => h.id !== id),
+        })),
+
+      // --- licenses
+      updateLicense: (id, field, value) =>
+        set((state) => ({
+          licenses: state.licenses.map((l) =>
+            l.id === id ? { ...l, [field]: value } : l
+          ),
+        })),
+      addLicense: (index) =>
+        set((state) => {
+          const newLicenses = [...state.licenses];
+          newLicenses.splice(index, 0, {
+            id: uuidv4(),
+            year: '',
+            month: '',
+            description: '',
+          });
+          return { licenses: newLicenses };
+        }),
+      deleteLicense: (id) =>
+        set((state) => ({
+          licenses: state.licenses.filter((l) => l.id !== id),
+        })),
+
+      // --- text sections
       updateMotivation: (value) => set({ motivation: value }),
-      updateSelfPromotion: (value) => set({ selfPromotion: value }), // 自己PR用の更新アクションを追加
+      updateSelfPromotion: (value) => set({ selfPromotion: value }),
       updateRequests: (value) => set({ requests: value }),
-      // ▲▲▲ 修正箇所 ▲▲▲
+
+      // --- photo
+      updatePhotoUrl: (dataUrl) => set({ photoUrl: dataUrl }),
+      clearPhoto: () => set({ photoUrl: '' }),
     }),
     {
       name: 'resume-data-storage',
