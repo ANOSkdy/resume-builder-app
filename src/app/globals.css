@@ -1,10 +1,14 @@
-/* src/app/globals.css */
+/* =========================
+   src/app/globals.css （完全版）
+   コピペでそのまま置き換え OK
+   ========================= */
+
+/* --- Base --- */
 body {
   margin: 0;
   padding: 40px 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f4f4f4;
@@ -18,14 +22,12 @@ body {
   width: 840px;
   background-color: #fff;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 16px;
   padding: 30px;
   border: none;
 }
 
-/* --- ヘッダー --- */
+/* --- Header --- */
 .title-row {
   display: flex;
   justify-content: space-between;
@@ -33,9 +35,14 @@ body {
   padding-bottom: 8px;
   margin-bottom: 10px;
 }
-.title-row h1 { margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 0.5em; }
+.title-row h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 0.5em;
+}
 
-/* --- 共通セル --- */
+/* --- Cell (common) --- */
 .cell {
   border: 1px solid #999;
   padding: 4px 8px;
@@ -44,11 +51,14 @@ body {
   position: relative;
 }
 .cell label {
-  position: absolute; top: 2px; left: 6px;
-  font-size: 11px; color: #333;
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  font-size: 11px;
+  color: #333;
 }
 
-/* --- 単一の太枠 --- */
+/* --- Single outer bold border --- */
 .profile-grid, .history-grid, .free-text-grid {
   border: 2px solid #000;
   display: grid;
@@ -57,12 +67,15 @@ body {
 }
 .profile-grid { margin-top: 0; }
 .profile-grid .cell, .history-grid .cell, .free-text-grid .cell {
-  margin: -1px 0 0 -1px; border-width: 1px;
+  margin: -1px 0 0 -1px;
+  border-width: 1px;
 }
 
-/* --- 個人情報グリッド --- */
+/* ======================
+   個人情報グリッド
+   ====================== */
 .profile-grid {
-  grid-template-columns: 80px 1fr 80px 1fr 140px;
+  grid-template-columns: 80px 1fr 80px 1fr 140px; /* 写真列は 140px 固定 */
   grid-template-rows: repeat(6, auto);
 }
 .profile-grid .cell { min-height: 40px; }
@@ -80,56 +93,157 @@ body {
 .p-tel-value      { grid-column: 2 / 3; grid-row: 6 / 7; }
 .p-email-label    { grid-column: 3 / 4; grid-row: 6 / 7; }
 .p-email-value    { grid-column: 4 / 5; grid-row: 6 / 7; }
-.p-photo          { grid-column: 5 / 6; grid-row: 1 / 6; justify-content: center; align-items: center; text-align: center; font-size: 12px; color: #777; }
 
 .p-name-value { min-height: 50px; }
 .p-address-value, .p-contact-value { min-height: 50px; }
 
 .horizontal-value {
-  display: flex; flex-direction: row; align-items: center; justify-content: flex-start;
-  gap: 1em; white-space: nowrap;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1em;
+  white-space: nowrap;
 }
 .p-birthdate-value { font-size: 14px; gap: 0.6em; }
 
 /* 氏名は常に大文字（入力時／印刷時とも） */
 .name-uppercase { text-transform: uppercase; }
 
-/* --- 学歴・職歴 & 免許・資格 --- */
+/* ======================
+   証明写真（最終版）
+   ====================== */
+.p-photo {
+  grid-column: 5 / 6;
+  grid-row: 1 / 7;           /* 上から下まで6行ぶんを完全に跨ぐ */
+  min-height: 240px;         /* 枠の潰れ防止（必要に応じて調整可） */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+  font-size: 12px;
+  color: #777;
+}
+.p-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;         /* 枠いっぱいに中央トリミング */
+}
+
+/* 視覚的にファイル入力を隠す（アクセシブル） */
+.visually-hidden-file {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+/* 枠中央のアップロードボタン（淡いグレー） */
+.photo-upload-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  background: #f7f7f7;       /* 淡いグレー */
+  color: #666;
+  padding: 6px 12px;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 2;
+  transition: opacity .15s ease-in-out, background .15s ease-in-out, border-color .15s ease-in-out;
+}
+.photo-upload-btn:hover {
+  background: #f2f2f2;
+  border-color: #ddd;
+}
+
+/* 画像がある時はボタンを隠し、ホバーで再表示 */
+.p-photo.has-image .photo-upload-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+.p-photo.has-image:hover .photo-upload-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 右上の削除ボタン（画像あり時のみ使用） */
+.photo-delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #999;
+  background: rgba(255,255,255,0.9);
+  color: #333;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* ======================
+   学歴・職歴／免許・資格
+   ====================== */
 .history-grid { grid-template-columns: 80px 60px 1fr; }
 .history-grid .cell { min-height: 38px; padding-left: 1em; }
 
-/* ヘッダセル */
+/* Header cells */
 .history-grid .cell[class*="-h"] {
-  justify-content: center; align-items: center;
-  font-weight: bold; background-color: #f7f7f7;
-  letter-spacing: 0.5em; padding-left: 0;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  background-color: #f7f7f7;
+  letter-spacing: 0.5em;
+  padding-left: 0;
 }
 
-/* 説明セルは左寄せがデフォルト */
+/* 説明セルは左寄せ */
 .history-grid .h-desc { align-items: flex-start; text-align: left; }
 
-/* 「以上」は右寄せ（入力時／印刷時とも） */
+/* 「以上」は右寄せ */
 .history-grid .h-desc.end-marker {
-  align-items: flex-end; text-align: right; padding-right: 1em;
+  align-items: flex-end;
+  text-align: right;
+  padding-right: 1em;
 }
 
 /* 年・月は中央寄せ */
 .history-grid .h-year, .history-grid .h-month {
-  align-items: center; justify-content: center; padding-left: 0;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0;
 }
 
-/* --- 志望動機 & 本人希望欄 --- */
+/* ======================
+   志望動機 & 本人希望欄
+   ====================== */
 .free-text-grid { grid-template-columns: 1fr; }
 .free-text-grid .f-header {
-  font-weight: bold; background-color: #f7f7f7;
-  justify-content: center; align-items: center; min-height: 38px;
+  font-weight: bold;
+  background-color: #f7f7f7;
+  justify-content: center;
+  align-items: center;
+  min-height: 38px;
 }
 .free-text-grid .f-content { min-height: 150px; align-items: flex-start; }
 
-/* --- 編集UI --- */
+/* ======================
+   編集UI（contentEditable）
+   ====================== */
 [contentEditable="true"] {
-  outline: none; transition: background-color 0.2s ease-in-out;
-  padding: 4px 8px; margin: -4px -8px;
+  outline: none;
+  transition: background-color 0.2s ease-in-out;
+  padding: 4px 8px;
+  margin: -4px -8px;
 }
 [contentEditable="true"]:hover { background-color: #f0f8ff; }
 [contentEditable="true"]:focus { background-color: #e6f2ff; box-shadow: inset 0 0 0 2px #4a90e2; }
@@ -137,40 +251,65 @@ body {
 .date-field > [contentEditable="true"]:empty::before { content: ' '; }
 
 .row-controls {
-  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
-  display: none; gap: 4px; align-items: center;
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  gap: 4px;
+  align-items: center;
 }
-.history-grid .cell:hover .row-controls, .dynamic-row:hover .row-controls { display: flex; }
+.history-grid .cell:hover .row-controls,
+.dynamic-row:hover .row-controls { display: flex; }
+
 .control-btn {
-  width: 22px; height: 22px; border-radius: 50%; border: 1px solid #ccc;
-  background-color: #fff; color: #555; display: flex; justify-content: center; align-items: center;
-  cursor: pointer; font-size: 16px; line-height: 1; transition: all 0.2s;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #555;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: all 0.2s;
 }
 .control-btn:hover { border-color: #999; transform: scale(1.1); }
 .control-btn.add-btn { background-color: #e6f2ff; color: #4a90e2; }
 .control-btn.delete-btn { background-color: #fed7d7; color: #e53e3e; }
 
-/* 固定フォントサイズ */
-.single-line-input { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
+/* 単一行入力の見栄え固定 */
+.single-line-input {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
 
+/* ======================
+   PDF ダウンロードボタン（ネイビー）
+   ====================== */
 .download-btn {
-  padding: 10px 20px; font-size: 16px; cursor: pointer;
-  background-color: #007bff; color: #fff; border: none; border-radius: 5px; transition: background-color 0.3s;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #1b2a57;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.2s ease-in-out, transform 0.05s ease-in-out;
 }
-.download-btn:hover { background-color: #0056b3; }
+.download-btn:hover:not(:disabled) { background-color: #152046; }
+.download-btn:active:not(:disabled) { transform: translateY(1px); }
+.download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* --- 印刷 --- */
-@media print {
-  .page-header, .download-btn, .row-controls { display: none !important; }
-  .resume-container { box-shadow: none !important; }
-  .p-birthdate-value { font-size: 12px !important; gap: 0.5em !important; }
-  /* 大文字化は印刷時も維持（継承されるが念のため） */
-  .name-uppercase { text-transform: uppercase !important; }
-  .ai-controls { display: none !important; }
-}
-/* src/app/globals.css の末尾に追記 */
-
-/* --- AI生成機能のスタイル --- */
+/* ======================
+   AI 生成 UI
+   ====================== */
 .ai-controls {
   padding: 10px;
   border-top: 1px solid #999;
@@ -192,21 +331,45 @@ body {
   font-size: 14px;
   cursor: pointer;
   background-color: #28a745;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 4px;
   transition: background-color 0.3s;
 }
-.ai-generate-btn:hover:not(:disabled) {
-  background-color: #218838;
-}
-.ai-generate-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-.ai-error-message {
+.ai-generate-btn:hover:not(:disabled) { background-color: #218838; }
+.ai-generate-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+.ai-error-message { width: 100%; color: #dc3545; font-size: 12px; margin: 0; }
+
+/* 学歴欄の内側編集 div（免許欄に合わせ） */
+.h-desc-input[contentEditable="true"] {
+  outline: none;
+  min-height: 28px;
   width: 100%;
-  color: #dc3545;
-  font-size: 12px;
-  margin: 0;
+}
+.h-desc-input[contentEditable="true"]:empty::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+}
+
+/* ======================
+   印刷
+   ====================== */
+@media print {
+  .page-header, .download-btn, .row-controls { display: none !important; }
+  .resume-container { box-shadow: none !important; }
+  .p-birthdate-value { font-size: 12px !important; gap: 0.5em !important; }
+  .name-uppercase { text-transform: uppercase !important; }
+  .ai-controls { display: none !important; }
+  .photo-upload-btn, .photo-delete-btn { display: none !important; }
+  /* プレースホルダーは印刷しない */
+  [contentEditable="true"]:empty::before,
+  .h-desc-input[contentEditable="true"]:empty::before,
+  .date-field > [contentEditable="true"]:empty::before { content: none !important; }
+  [data-placeholder]::before { color: transparent !important; }
+}
+/* 枠内アップロードUIは使わないため常に無効化しておく（保険） */
+.p-photo .photo-upload-btn,
+.p-photo .visually-hidden-file {
+  display: none !important;
 }
