@@ -4,31 +4,42 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useResumeStore } from '@/store/resumeStore';
 
-// 履歴書「職歴」から会社名を推定
-function extractCompaniesFromHistories(histories = []) {
-  let inWork = false;
-  const companies = [];
-  const normalize = (s) => (s || '').replace(/[\s\u3000]/g, '');
-
-  for (const h of histories) {
-    const desc = h?.description || '';
-    if (h.type === 'header' && normalize(desc) === '職歴') {
-      inWork = true;
-      continue;
+function extractCompanies(resume = {}) {
+  const list = [];
+  if (Array.isArray(resume.employmentHistory)) {
+    for (const e of resume.employmentHistory) {
+      list.push(e?.company || e?.name || '');
     }
-    if (!inWork) continue;
-    if (h.type === 'footer') break;
-    if (h.type === 'entry' && /(入社|入所|配属|参画)/.test(desc)) {
-      const name = (desc.split(/[ \u3000]/)[0] || '').trim();
-      if (name) companies.push(name);
+  } else if (Array.isArray(resume.jobs)) {
+    for (const j of resume.jobs) {
+      list.push(j?.company || j?.name || '');
+    }
+  } else if (Array.isArray(resume.histories)) {
+    let inWork = false;
+    const normalize = (s) => (s || '').replace(/[\s\u3000]/g, '');
+    for (const h of resume.histories) {
+      const desc = h?.description || '';
+      if (h.type === 'header' && normalize(desc) === '職歴') {
+        inWork = true;
+        continue;
+      }
+      if (!inWork) continue;
+      if (h.type === 'footer') break;
+      if (h.type === 'entry' && /(入社|入所|配属|参画)/.test(desc)) {
+        const name = (desc.split(/[ \u3000]/)[0] || '').trim();
+        list.push(name);
+      }
     }
   }
-  return [...new Set(companies)];
+  const unique = [...new Set(list)];
+  return unique.map((c, i) => c || `会社${i + 1}`);
 }
 
 const JobPreview = React.forwardRef((props, ref) => {
   const {
     histories,
+    employmentHistory,
+    jobs,
     jobSummary,
     jobDetails,
     setJobSummary,
@@ -37,21 +48,14 @@ const JobPreview = React.forwardRef((props, ref) => {
   } = useResumeStore();
 
   const companies = useMemo(
-    () => extractCompaniesFromHistories(histories),
-    [histories]
+    () => extractCompanies({ histories, employmentHistory, jobs }),
+    [histories, employmentHistory, jobs]
   );
 
   useEffect(() => {
-    const base = Array.isArray(jobDetails) ? [...jobDetails] : [];
-    const next = [...base];
-    if (next.length < companies.length) {
-      for (let i = next.length; i < companies.length; i++) next.push('');
-    } else if (next.length > companies.length) {
-      next.length = companies.length;
-    }
-    setJobDetails(next);
+    setJobDetails(jobDetails);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companies.length]);
+  }, [companies.join('|')]);
 
   const [kw, setKw] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,18 +77,16 @@ const JobPreview = React.forwardRef((props, ref) => {
       const data = await res.json();
       const nextSummary =
         data.summary ?? data.summaryText ?? data.generatedText ?? data.text ?? '';
-      let details =
-        data.details ?? data.detailsByCompany ?? data.detailsText ?? [];
-      if (typeof details === 'string') {
-        details = companies.map(() => details);
-      } else if (!Array.isArray(details)) {
-        details = [];
+      let details = Array.isArray(data.details) ? data.details : [];
+      if (details.length && typeof details[0] === 'string') {
+        details = details.map((d, i) => ({
+          company: companies[i] || `会社${i + 1}`,
+          detail: d,
+        }));
       }
-      const normalized = companies.map((_, i) => {
-        const d = details[i];
-        if (!d) return '';
-        if (typeof d === 'string') return d;
-        return d.detail || '';
+      const normalized = companies.map((company, i) => {
+        const found = details.find((d) => d?.company === company);
+        return { company, detail: found?.detail || '' };
       });
 
       setJobSummary(nextSummary);
@@ -94,7 +96,7 @@ const JobPreview = React.forwardRef((props, ref) => {
       }
     } catch (e) {
       setJobSummary('');
-      setJobDetails(companies.map(() => ''));
+      setJobDetails([]);
       setErr(e?.message || 'AI生成に失敗しました。');
     } finally {
       setLoading(false);
@@ -131,7 +133,7 @@ const JobPreview = React.forwardRef((props, ref) => {
             onBlur={(e) => upsertJobDetail(idx, e.currentTarget.innerText)}
             data-placeholder="こちらに当該企業での担当業務・実績・工夫・成果などを記載してください"
           >
-            {jobDetails?.[idx] || ''}
+            {jobDetails?.[idx]?.detail || ''}
           </div>
         </div>
       ))}

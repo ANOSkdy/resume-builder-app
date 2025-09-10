@@ -3,6 +3,28 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
+function extractCompaniesFromHistories(histories = []) {
+  let inWork = false;
+  const companies = [];
+  const normalize = (s) => (s || '').replace(/[\s\u3000]/g, '');
+
+  for (const h of histories) {
+    const desc = h?.description || '';
+    if (h.type === 'header' && normalize(desc) === '職歴') {
+      inWork = true;
+      continue;
+    }
+    if (!inWork) continue;
+    if (h.type === 'footer') break;
+    if (h.type === 'entry' && /(入社|入所|配属|参画)/.test(desc)) {
+      const name = (desc.split(/[ \u3000]/)[0] || '').trim();
+      companies.push(name);
+    }
+  }
+  const unique = [...new Set(companies)];
+  return unique.map((c, i) => c || `会社${i + 1}`);
+}
+
 const initialResumeData = {
   profile: {
     name: '',
@@ -112,13 +134,31 @@ export const useResumeStore = create(
       // ▼ 職務経歴書 用のupdate
       setJobSummary: (value) => set({ jobSummary: value }),
       setJobDetails: (arr) =>
-        set({ jobDetails: Array.isArray(arr) ? arr : [] }),
+        set((state) => {
+          const companies = extractCompaniesFromHistories(state.histories);
+          const input = Array.isArray(arr) ? arr : state.jobDetails;
+          const normalized = companies.map((company, i) => {
+            const found = Array.isArray(input)
+              ? input.find((d) => d?.company === company) || input[i]
+              : null;
+            const detail =
+              typeof found === 'string'
+                ? found
+                : typeof found?.detail === 'string'
+                  ? found.detail
+                  : '';
+            return { company, detail };
+          });
+          return { jobDetails: normalized };
+        }),
       upsertJobDetail: (index, value) =>
         set((state) => {
+          const companies = extractCompaniesFromHistories(state.histories);
           const next = Array.isArray(state.jobDetails)
             ? [...state.jobDetails]
             : [];
-          next[index] = value;
+          const company = companies[index] || `会社${index + 1}`;
+          next[index] = { company, detail: value };
           return { jobDetails: next };
         }),
 

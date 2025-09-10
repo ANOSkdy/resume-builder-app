@@ -6,7 +6,11 @@ describe('generate-job API', () => {
     const req = new Request('http://localhost', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keywords: 'test', context: { histories: [] } }),
+      body: JSON.stringify({
+        keywords: 'test',
+        context: { histories: [] },
+        companies: ['A', 'B'],
+      }),
     });
     const res = await POST(req);
     expect(res.status).toBe(500);
@@ -14,7 +18,10 @@ describe('generate-job API', () => {
     expect(json).toEqual({
       ok: false,
       summary: '',
-      details: [],
+      details: [
+        { company: 'A', detail: '' },
+        { company: 'B', detail: '' },
+      ],
       error: 'Gemini APIキーが未設定です',
     });
   });
