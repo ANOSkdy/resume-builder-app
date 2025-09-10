@@ -93,16 +93,25 @@ const JobPreview = React.forwardRef((props, ref) => {
 
       <div className="free-text-grid" style={{ marginTop: 10 }}>
         <div className="cell f-header">職務経歴詳細</div>
-        <div
-          className="cell f-content"
-          style={{ minHeight: 220 }}
-          contentEditable
-          suppressContentEditableWarning
-          onBlur={(e) => updateJobDetails(e.currentTarget.innerText)}
-          data-placeholder="履歴書の「職歴」をもとに、担当業務・役割・実績などを詳述（AI生成または手入力）"
-        >
-          {jobDetails}
-        </div>
+        {(jobDetails || '')
+          .split(/\n\s*\n/)
+          .map((block, idx) => (
+            <div
+              key={idx}
+              className="cell f-content"
+              style={{ minHeight: 160, marginTop: idx > 0 ? 8 : 0 }}
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => {
+                const newBlocks = [...(jobDetails || '').split(/\n\s*\n/)];
+                newBlocks[idx] = e.currentTarget.innerText;
+                updateJobDetails(newBlocks.join('\n\n'));
+              }}
+              data-placeholder="会社ごとの職務内容を記載（AI生成または手入力）"
+            >
+              {block}
+            </div>
+          ))}
       </div>
 
       <div className="ai-controls">
