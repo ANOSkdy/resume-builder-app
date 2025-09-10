@@ -39,7 +39,7 @@ body {
   margin: 0;
   font-size: 28px;
   font-weight: bold;
-  letter-spacing: 0.5em;
+  letter-spacing: 0.25em;
 }
 
 /* --- Cell (common) --- */
@@ -319,6 +319,8 @@ body {
   gap: 10px;
   align-items: center;
 }
+
+.job-preview { margin-top: 40px; }
 .ai-keyword-input {
   flex-grow: 1;
   padding: 8px 12px;
