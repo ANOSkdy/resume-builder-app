@@ -19,7 +19,7 @@ const JobPreview = React.forwardRef((props, ref) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState('');
 
-  const handleGenerateSummary = async () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
     setAiError('');
     try {
@@ -36,7 +36,8 @@ const JobPreview = React.forwardRef((props, ref) => {
         throw new Error(err.error || 'AIの生成に失敗しました。');
       }
       const data = await res.json();
-      updateJobSummary(data.generatedText || '');
+      updateJobSummary(data.summary || '');
+      updateJobDetails(data.details || '');
     } catch (e) {
       setAiError(e.message || 'エラーが発生しました');
     } finally {
@@ -61,24 +62,6 @@ const JobPreview = React.forwardRef((props, ref) => {
         >
           {jobSummary}
         </div>
-        <div className="ai-controls">
-          <input
-            type="text"
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-            placeholder="要約に入れたいキーワード"
-            className="ai-keyword-input"
-            disabled={isGenerating}
-          />
-          <button
-            onClick={handleGenerateSummary}
-            className="ai-generate-btn"
-            disabled={isGenerating || !keywords}
-          >
-            {isGenerating ? '生成中...' : 'AIで要約を生成'}
-          </button>
-          {aiError && <p className="ai-error-message">{aiError}</p>}
-        </div>
       </div>
 
       <div className="free-text-grid" style={{ marginTop: 20 }}>
@@ -92,6 +75,25 @@ const JobPreview = React.forwardRef((props, ref) => {
         >
           {jobDetails}
         </div>
+      </div>
+
+      <div className="ai-controls" style={{ marginTop: 20 }}>
+        <input
+          type="text"
+          value={keywords}
+          onChange={(e) => setKeywords(e.target.value)}
+          placeholder="下書きに入れたいキーワード"
+          className="ai-keyword-input"
+          disabled={isGenerating}
+        />
+        <button
+          onClick={handleGenerate}
+          className="ai-generate-btn"
+          disabled={isGenerating || !keywords}
+        >
+          {isGenerating ? '生成中...' : 'AIで下書き生成'}
+        </button>
+        {aiError && <p className="ai-error-message">{aiError}</p>}
       </div>
     </div>
   );

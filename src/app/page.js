@@ -12,21 +12,17 @@ export default function Home() {
 
   const fileInputId = useId();
   const { updatePhotoUrl } = useResumeStore();
+  const [view, setView] = useState('resume');
 
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
-    // 画面に出たら有効化
     if (contentRef.current) setIsReady(true);
-  }, []);
+  }, [view]);
 
-  // v3: contentRef を直接渡す（content: () => ... は使わない）
   const handlePrint = useReactToPrint({
     contentRef,
-    documentTitle: '履歴書',
-    onAfterPrint: () => {
-      // ここは任意
-      // alert('PDFの保存が完了しました。');
-    },
+    documentTitle: view === 'resume' ? '履歴書' : '職務経歴書',
+    onAfterPrint: () => {},
     removeAfterPrint: true,
   });
 
@@ -52,9 +48,24 @@ export default function Home() {
       <header className="page-header" style={{ padding: '20px', textAlign: 'center' }}>
         <h1 style={{ margin: 0 }}>AI履歴書</h1>
 
-        {/* ヘッダーの操作ボタン群（PDFと同じ配色） */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>
-          {/* 写真を選択（PDFボタンの横） */}
+          <button
+            className="download-btn"
+            onClick={() => setView('resume')}
+            disabled={view === 'resume'}
+          >
+            履歴書
+          </button>
+          <button
+            className="download-btn"
+            onClick={() => setView('job')}
+            disabled={view === 'job'}
+          >
+            職務経歴書
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>
           <button
             type="button"
             className="download-btn"
@@ -70,7 +81,6 @@ export default function Home() {
             style={{ display: 'none' }}
           />
 
-          {/* PDFダウンロード */}
           <button
             onClick={handlePrint}
             className="download-btn"
@@ -83,10 +93,11 @@ export default function Home() {
 
       {/* 印刷対象 */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <div ref={contentRef}>
-          <ResumePreview />
-          <JobPreview />
-        </div>
+        {view === 'resume' ? (
+          <ResumePreview ref={contentRef} />
+        ) : (
+          <JobPreview ref={contentRef} />
+        )}
       </div>
     </main>
   );

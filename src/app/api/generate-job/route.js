@@ -17,10 +17,19 @@ export async function POST(request) {
       .filter((h) => h.type === 'entry' && h.description)
       .map((h) => `${h.year}年${h.month}月 ${h.description}`)
       .join('\n');
-    const prompt = `あなたは優秀なキャリアアドバイザーです。\n以下の情報を基に「職務経歴要約」を作成してください。\n\n# 職務経歴\n${historyText || '記載なし'}\n\n# キーワード\n${keywords}\n\n# パターン\n${pattern || 'default'}`;
+    const prompt = `あなたは優秀なキャリアアドバイザーです。\n以下の情報を基に「職務経歴要約」と「職務経歴詳細」を作成してください。\n\n# 職務経歴\n${historyText || '記載なし'}\n\n# キーワード\n${keywords}\n\n# パターン\n${pattern || 'default'}\n\nJSON形式で {"summary": "...", "details": "..."} のみを出力してください。`;
     const result = await model.generateContent(prompt);
-    const generatedText = await result.response.text();
-    return NextResponse.json({ generatedText });
+    const text = await result.response.text();
+    let summary = '';
+    let details = '';
+    try {
+      const parsed = JSON.parse(text);
+      summary = parsed.summary || '';
+      details = parsed.details || '';
+    } catch {
+      summary = text;
+    }
+    return NextResponse.json({ summary, details });
   } catch (error) {
     console.error('Gemini APIエラー:', error);
     return NextResponse.json(
