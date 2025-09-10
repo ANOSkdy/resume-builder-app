@@ -84,6 +84,9 @@ export default function Home() {
             type="button"
             className="download-btn"
             onClick={() => setView(view === 'resume' ? 'job' : 'resume')}
+            aria-label={
+              view === 'resume' ? '職務経歴書へ切り替え' : '履歴書へ切り替え'
+            }
           >
             {view === 'resume' ? '職務経歴書へ' : '履歴書へ'}
           </button>

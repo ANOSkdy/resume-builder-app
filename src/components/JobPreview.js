@@ -12,46 +12,41 @@ const JobPreview = React.forwardRef((props, ref) => {
     updateJobDetails,
   } = useResumeStore();
 
-  const [summaryKeywords, setSummaryKeywords] = useState('');
-  const [detailKeywords, setDetailKeywords] = useState('');
-  const [isSummaryGenerating, setIsSummaryGenerating] = useState(false);
-  const [isDetailGenerating, setIsDetailGenerating] = useState(false);
-  const [summaryError, setSummaryError] = useState('');
-  const [detailError, setDetailError] = useState('');
+  const [keywords, setKeywords] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleGenerate = async (
-    target,
-    keywords,
-    setError,
-    setLoading,
-    updater
-  ) => {
-    setLoading(true);
+  const handleGenerate = async () => {
+    setIsGenerating(true);
     setError('');
     try {
       const res = await fetch('/api/generate-job', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target, keywords, context: { histories } }),
+        body: JSON.stringify({ keywords, context: { histories } }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'AIの生成に失敗しました。');
       }
       const data = await res.json();
-      if (target === 'summary') updater(data.jobSummary || '');
-      if (target === 'detail') updater(data.jobDetails || '');
+      updateJobSummary(data.summary || '');
+      updateJobDetails(data.details || '');
     } catch (e) {
       setError(e.message || 'エラーが発生しました');
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
   return (
     <div className="resume-container job-preview" ref={ref}>
+      <div className="title-row">
+        <h1>職 務 経 歴 書</h1>
+      </div>
+
       <div className="free-text-grid">
-        <div className="cell f-header">職務要約</div>
+        <div className="cell f-header">職務経歴要約</div>
         <div
           className="cell f-content"
           contentEditable
@@ -60,32 +55,6 @@ const JobPreview = React.forwardRef((props, ref) => {
           data-placeholder="これまでの経験を簡潔にまとめてください"
         >
           {jobSummary}
-        </div>
-        <div className="ai-controls">
-          <input
-            type="text"
-            value={summaryKeywords}
-            onChange={(e) => setSummaryKeywords(e.target.value)}
-            placeholder="要約に入れたいキーワード"
-            className="ai-keyword-input"
-            disabled={isSummaryGenerating}
-          />
-          <button
-            onClick={() =>
-              handleGenerate(
-                'summary',
-                summaryKeywords,
-                setSummaryError,
-                setIsSummaryGenerating,
-                updateJobSummary
-              )
-            }
-            className="ai-generate-btn"
-            disabled={isSummaryGenerating || !summaryKeywords}
-          >
-            {isSummaryGenerating ? '生成中...' : 'AIで要約生成'}
-          </button>
-          {summaryError && <p className="ai-error-message">{summaryError}</p>}
         </div>
       </div>
 
@@ -100,32 +69,27 @@ const JobPreview = React.forwardRef((props, ref) => {
         >
           {jobDetails}
         </div>
-        <div className="ai-controls">
-          <input
-            type="text"
-            value={detailKeywords}
-            onChange={(e) => setDetailKeywords(e.target.value)}
-            placeholder="詳細に入れたいキーワード"
-            className="ai-keyword-input"
-            disabled={isDetailGenerating}
-          />
-          <button
-            onClick={() =>
-              handleGenerate(
-                'detail',
-                detailKeywords,
-                setDetailError,
-                setIsDetailGenerating,
-                updateJobDetails
-              )
-            }
-            className="ai-generate-btn"
-            disabled={isDetailGenerating || !detailKeywords}
-          >
-            {isDetailGenerating ? '生成中...' : 'AIで詳細生成'}
-          </button>
-          {detailError && <p className="ai-error-message">{detailError}</p>}
-        </div>
+      </div>
+
+      <div className="ai-controls">
+        <input
+          type="text"
+          value={keywords}
+          onChange={(e) => setKeywords(e.target.value)}
+          placeholder="文章に入れたいキーワード"
+          className="ai-keyword-input"
+          disabled={isGenerating}
+          aria-label="AI生成用キーワード"
+        />
+        <button
+          onClick={handleGenerate}
+          className="ai-generate-btn"
+          disabled={isGenerating || !keywords}
+          aria-label="AIで職務経歴生成"
+        >
+          {isGenerating ? '生成中...' : 'AIで職務経歴生成'}
+        </button>
+        {error && <p className="ai-error-message">{error}</p>}
       </div>
     </div>
   );

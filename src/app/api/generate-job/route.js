@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(request) {
   try {
-    const { target, keywords, context } = await request.json();
+    const { keywords, context } = await request.json();
 
     if (!keywords) {
       return NextResponse.json(
@@ -23,39 +23,35 @@ export async function POST(request) {
       ?.map((h) => `${h.year}年${h.month}月 ${h.description}`)
       ?.join('\n') || '記載なし';
 
-    let prompt = '';
-    if (target === 'summary') {
-      prompt = `
-        あなたは優秀なキャリアアドバイザーです。
-        以下の職務経歴を基に、日本の就職活動向けの「職務要約」を200字程度で作成してください。
+    const summaryPrompt = `
+      あなたは優秀なキャリアアドバイザーです。
+      以下の職務経歴を基に、日本の就職活動向けの「職務経歴要約」を200字程度で作成してください。
 
-        # 職務経歴
-        ${workHistoryText}
+      # 職務経歴
+      ${workHistoryText}
 
-        # キーワード
-        ${keywords}
-      `;
-    } else {
-      prompt = `
-        あなたは優秀なキャリアアドバイザーです。
-        以下の職務経歴を基に、日本の就職活動向けの「職務経歴詳細」を300〜400字程度で作成してください。
+      # キーワード
+      ${keywords}
+    `;
 
-        # 職務経歴
-        ${workHistoryText}
+    const detailPrompt = `
+      あなたは優秀なキャリアアドバイザーです。
+      以下の職務経歴を基に、日本の就職活動向けの「職務経歴詳細」を300〜400字程度で、プロジェクト単位で具体的に記述してください。
 
-        # キーワード
-        ${keywords}
-      `;
-    }
+      # 職務経歴
+      ${workHistoryText}
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const generatedText = response.text();
+      # キーワード
+      ${keywords}
+    `;
 
-    return NextResponse.json({
-      jobSummary: target === 'summary' ? generatedText : '',
-      jobDetails: target === 'detail' ? generatedText : '',
-    });
+    const summaryRes = await model.generateContent(summaryPrompt);
+    const detailRes = await model.generateContent(detailPrompt);
+
+    const summary = (await summaryRes.response).text();
+    const details = (await detailRes.response).text();
+
+    return NextResponse.json({ summary, details });
   } catch (error) {
     console.error('Gemini APIエラー:', error);
     return NextResponse.json(

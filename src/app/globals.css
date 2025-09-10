@@ -342,6 +342,7 @@ body {
 
 /* JobPreview */
 .job-preview .free-text-grid .f-content { min-height: 120px; }
+.job-preview .title-row { justify-content: center; }
 
 /* 学歴欄の内側編集 div（免許欄に合わせ） */
 .h-desc-input[contentEditable="true"] {
