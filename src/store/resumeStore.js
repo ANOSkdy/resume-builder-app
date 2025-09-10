@@ -28,8 +28,8 @@ const initialResumeData = {
   selfPromotion: '',
   requests: '',
   // ▼ 職務経歴書 用の状態
-  jobSummary: '',   // 職務経歴要約
-  jobDetails: '',   // 職務経歴詳細
+  jobSummary: '',           // 職務経歴要約
+  jobDetails: [],           // 会社ごとの詳細（可変配列）
 
   // 証明写真（Base64 Data URL を想定）
   photoUrl: '',
@@ -111,7 +111,13 @@ export const useResumeStore = create(
       updateRequests: (value) => set({ requests: value }),
       // ▼ 職務経歴書 用のupdate
       updateJobSummary: (value) => set({ jobSummary: value }),
-      updateJobDetails: (value) => set({ jobDetails: value }),
+      setJobDetails: (arr) => set({ jobDetails: arr }),
+      updateJobDetail: (index, value) =>
+        set((state) => {
+          const next = [...(state.jobDetails || [])];
+          next[index] = value;
+          return { jobDetails: next };
+        }),
 
       // --- photo
       updatePhotoUrl: (dataUrl) => set({ photoUrl: dataUrl }),

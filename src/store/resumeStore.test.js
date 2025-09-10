@@ -21,16 +21,17 @@ vi.stubGlobal('localStorage', mockStorage);
 const { useResumeStore } = await import('./resumeStore');
 
 beforeEach(() => {
-  useResumeStore.setState({ jobSummary: '', jobDetails: '' });
+  useResumeStore.setState({ jobSummary: '', jobDetails: [] });
 });
 
 describe('resumeStore job fields', () => {
-  it('updates job summary and details', () => {
-    const { updateJobSummary, updateJobDetails } = useResumeStore.getState();
+  it('updates job summary and details array', () => {
+    const { updateJobSummary, setJobDetails, updateJobDetail } = useResumeStore.getState();
     updateJobSummary('summary');
-    updateJobDetails('details');
+    setJobDetails(['a', 'b']);
+    updateJobDetail(1, 'updated');
     const state = useResumeStore.getState();
     expect(state.jobSummary).toBe('summary');
-    expect(state.jobDetails).toBe('details');
+    expect(state.jobDetails).toEqual(['a', 'updated']);
   });
 });
