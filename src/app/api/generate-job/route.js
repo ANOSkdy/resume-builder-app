@@ -9,7 +9,10 @@ const API_KEY =
 
 export async function POST(req) {
   try {
-    const { keywords = '', histories = [] } = await req.json();
+    const { keywords = '', context = {} } = await req.json();
+    const histories = Array.isArray(context.histories)
+      ? context.histories
+      : [];
 
     const entries = histories
       .filter((h) => h?.type !== 'header' && h?.type !== 'footer')
@@ -47,7 +50,7 @@ ${keywords || '（特になし）'}
 
     if (!API_KEY) {
       return NextResponse.json(
-        { error: 'Gemini APIキーが未設定です' },
+        { ok: false, summary: '', details: [], error: 'Gemini APIキーが未設定です' },
         { status: 500 }
       );
     }
@@ -64,14 +67,17 @@ ${keywords || '（特になし）'}
     const summaryText = (summaryMatch?.[1] || '').trim();
     const detailsText = (detailsMatch?.[1] || '').trim();
 
-    return NextResponse.json({
-      summaryText,
-      detailsText,
-    });
+    const details = detailsText.split(/\n+/).filter(Boolean);
+    return NextResponse.json({ ok: true, summary: summaryText, details });
   } catch (e) {
     console.error('generate-job error', e);
     return NextResponse.json(
-      { error: e.message || 'server error' },
+      {
+        ok: false,
+        summary: '',
+        details: [],
+        error: e.message || 'server error',
+      },
       { status: 500 }
     );
   }

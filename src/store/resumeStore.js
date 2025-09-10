@@ -110,11 +110,14 @@ export const useResumeStore = create(
       updateSelfPromotion: (value) => set({ selfPromotion: value }),
       updateRequests: (value) => set({ requests: value }),
       // ▼ 職務経歴書 用のupdate
-      updateJobSummary: (value) => set({ jobSummary: value }),
-      setJobDetails: (arr) => set({ jobDetails: arr }),
-      updateJobDetail: (index, value) =>
+      setJobSummary: (value) => set({ jobSummary: value }),
+      setJobDetails: (arr) =>
+        set({ jobDetails: Array.isArray(arr) ? arr : [] }),
+      upsertJobDetail: (index, value) =>
         set((state) => {
-          const next = [...(state.jobDetails || [])];
+          const next = Array.isArray(state.jobDetails)
+            ? [...state.jobDetails]
+            : [];
           next[index] = value;
           return { jobDetails: next };
         }),

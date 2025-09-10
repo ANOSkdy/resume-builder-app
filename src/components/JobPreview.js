@@ -26,26 +26,14 @@ function extractCompaniesFromHistories(histories = []) {
   return [...new Set(companies)];
 }
 
-// AI応答のコードフェンス除去＆JSON解析
-function parseAiText(payload) {
-  if (!payload) return {};
-  let text = String(payload).trim();
-  text = text.replace(/```(json)?/gi, '').replace(/```/g, '').trim();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { summary: text, detailsByCompany: [] };
-  }
-}
-
 const JobPreview = React.forwardRef((props, ref) => {
   const {
     histories,
     jobSummary,
     jobDetails,
-    updateJobSummary,
+    setJobSummary,
     setJobDetails,
-    updateJobDetail,
+    upsertJobDetail,
   } = useResumeStore();
 
   const companies = useMemo(
@@ -54,16 +42,14 @@ const JobPreview = React.forwardRef((props, ref) => {
   );
 
   useEffect(() => {
-    setJobDetails((prev => {
-      const base = Array.isArray(jobDetails) ? [...jobDetails] : [];
-      const next = [...base];
-      if (next.length < companies.length) {
-        for (let i = next.length; i < companies.length; i++) next.push('');
-      } else if (next.length > companies.length) {
-        next.length = companies.length;
-      }
-      return next;
-    })());
+    const base = Array.isArray(jobDetails) ? [...jobDetails] : [];
+    const next = [...base];
+    if (next.length < companies.length) {
+      for (let i = next.length; i < companies.length; i++) next.push('');
+    } else if (next.length > companies.length) {
+      next.length = companies.length;
+    }
+    setJobDetails(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companies.length]);
 
@@ -85,19 +71,30 @@ const JobPreview = React.forwardRef((props, ref) => {
         }),
       });
       const data = await res.json();
-      const raw = data.generatedText ?? data.text ?? data.result ?? data;
-      const parsed = typeof raw === 'string' ? parseAiText(raw) : raw;
-
-      const nextSummary = parsed?.summary || parsed?.jobSummary || '';
-      let details = parsed?.detailsByCompany || parsed?.details || [];
+      const nextSummary =
+        data.summary ?? data.summaryText ?? data.generatedText ?? data.text ?? '';
+      let details =
+        data.details ?? data.detailsByCompany ?? data.detailsText ?? [];
       if (typeof details === 'string') {
         details = companies.map(() => details);
+      } else if (!Array.isArray(details)) {
+        details = [];
       }
-      const normalized = companies.map((_, i) => details[i] ?? '');
+      const normalized = companies.map((_, i) => {
+        const d = details[i];
+        if (!d) return '';
+        if (typeof d === 'string') return d;
+        return d.detail || '';
+      });
 
-      updateJobSummary(nextSummary);
+      setJobSummary(nextSummary);
       setJobDetails(normalized);
+      if (!res.ok || data.ok === false) {
+        setErr(data.error || 'AI生成に失敗しました。');
+      }
     } catch (e) {
+      setJobSummary('');
+      setJobDetails(companies.map(() => ''));
       setErr(e?.message || 'AI生成に失敗しました。');
     } finally {
       setLoading(false);
@@ -117,7 +114,7 @@ const JobPreview = React.forwardRef((props, ref) => {
           className="cell f-content"
           contentEditable
           suppressContentEditableWarning
-          onBlur={(e) => updateJobSummary(e.currentTarget.innerText)}
+          onBlur={(e) => setJobSummary(e.currentTarget.innerText)}
           data-placeholder="履歴書の職歴を参考に、要約を記載します（AIボタンでも自動生成できます）"
         >
           {jobSummary}
@@ -131,7 +128,7 @@ const JobPreview = React.forwardRef((props, ref) => {
             className="cell f-content"
             contentEditable
             suppressContentEditableWarning
-            onBlur={(e) => updateJobDetail(idx, e.currentTarget.innerText)}
+            onBlur={(e) => upsertJobDetail(idx, e.currentTarget.innerText)}
             data-placeholder="こちらに当該企業での担当業務・実績・工夫・成果などを記載してください"
           >
             {jobDetails?.[idx] || ''}

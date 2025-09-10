@@ -26,10 +26,11 @@ beforeEach(() => {
 
 describe('resumeStore job fields', () => {
   it('updates job summary and details array', () => {
-    const { updateJobSummary, setJobDetails, updateJobDetail } = useResumeStore.getState();
-    updateJobSummary('summary');
+    const { setJobSummary, setJobDetails, upsertJobDetail } =
+      useResumeStore.getState();
+    setJobSummary('summary');
     setJobDetails(['a', 'b']);
-    updateJobDetail(1, 'updated');
+    upsertJobDetail(1, 'updated');
     const state = useResumeStore.getState();
     expect(state.jobSummary).toBe('summary');
     expect(state.jobDetails).toEqual(['a', 'updated']);
