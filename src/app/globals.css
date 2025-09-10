@@ -340,6 +340,9 @@ body {
 .ai-generate-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 .ai-error-message { width: 100%; color: #dc3545; font-size: 12px; margin: 0; }
 
+/* JobPreview */
+.job-preview .free-text-grid .f-content { min-height: 120px; }
+
 /* 学歴欄の内側編集 div（免許欄に合わせ） */
 .h-desc-input[contentEditable="true"] {
   outline: none;

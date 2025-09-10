@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useId } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import ResumePreview from '@/components/ResumePreview';
+import JobPreview from '@/components/JobPreview';
 import { useResumeStore } from '@/store/resumeStore';
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
   const { updatePhotoUrl } = useResumeStore();
 
   const [isReady, setIsReady] = useState(false);
+  const [view, setView] = useState('resume');
   useEffect(() => {
     // 画面に出たら有効化
     if (contentRef.current) setIsReady(true);
@@ -77,12 +79,24 @@ export default function Home() {
           >
             {isReady ? 'PDFダウンロード' : '準備中...'}
           </button>
+
+          <button
+            type="button"
+            className="download-btn"
+            onClick={() => setView(view === 'resume' ? 'job' : 'resume')}
+          >
+            {view === 'resume' ? '職務経歴書へ' : '履歴書へ'}
+          </button>
         </div>
       </header>
 
       {/* 印刷対象 */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <ResumePreview ref={contentRef} />
+        {view === 'resume' ? (
+          <ResumePreview ref={contentRef} />
+        ) : (
+          <JobPreview ref={contentRef} />
+        )}
       </div>
     </main>
   );
