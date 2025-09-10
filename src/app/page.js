@@ -12,17 +12,16 @@ export default function Home() {
 
   const fileInputId = useId();
   const { updatePhotoUrl } = useResumeStore();
-  const [view, setView] = useState('resume');
+  const [mode, setMode] = useState('resume'); // 'resume' | 'job'
 
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
     if (contentRef.current) setIsReady(true);
-  }, [view]);
+  }, []);
 
   const handlePrint = useReactToPrint({
     contentRef,
-    documentTitle: view === 'resume' ? '履歴書' : '職務経歴書',
-    onAfterPrint: () => {},
+    documentTitle: '履歴書',
     removeAfterPrint: true,
   });
 
@@ -46,24 +45,9 @@ export default function Home() {
   return (
     <main>
       <header className="page-header" style={{ padding: '20px', textAlign: 'center' }}>
-        <h1 style={{ margin: 0 }}>AI履歴書</h1>
-
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>
-          <button
-            className="download-btn"
-            onClick={() => setView('resume')}
-            disabled={view === 'resume'}
-          >
-            履歴書
-          </button>
-          <button
-            className="download-btn"
-            onClick={() => setView('job')}
-            disabled={view === 'job'}
-          >
-            職務経歴書
-          </button>
-        </div>
+        <h1 style={{ margin: 0 }}>
+          {mode === 'resume' ? 'AI履歴書' : 'AI職務経歴書'}
+        </h1>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>
           <button
@@ -88,12 +72,20 @@ export default function Home() {
           >
             {isReady ? 'PDFダウンロード' : '準備中...'}
           </button>
+
+          <button
+            type="button"
+            className="download-btn"
+            onClick={() => setMode((m) => (m === 'resume' ? 'job' : 'resume'))}
+          >
+            {mode === 'resume' ? '職務経歴書へ' : '履歴書へ'}
+          </button>
         </div>
       </header>
 
       {/* 印刷対象 */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        {view === 'resume' ? (
+        {mode === 'resume' ? (
           <ResumePreview ref={contentRef} />
         ) : (
           <JobPreview ref={contentRef} />

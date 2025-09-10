@@ -3,38 +3,77 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const runtime = 'nodejs';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const MODEL = process.env.GOOGLE_GENAI_MODEL || 'gemini-1.5-flash';
+const API_KEY =
+  process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const { keywords, context = {}, pattern } = await request.json();
-    if (!keywords) {
-      return NextResponse.json({ error: 'キーワードが入力されていません。' }, { status: 400 });
-    }
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const histories = context.histories || [];
-    const historyText = histories
-      .filter((h) => h.type === 'entry' && h.description)
-      .map((h) => `${h.year}年${h.month}月 ${h.description}`)
+    const { keywords = '', histories = [] } = await req.json();
+
+    const entries = histories
+      .filter((h) => h?.type !== 'header' && h?.type !== 'footer')
+      .map((h) => `${h.year || ''}年${h.month || ''}月: ${h.description || ''}`)
       .join('\n');
-    const prompt = `あなたは優秀なキャリアアドバイザーです。\n以下の情報を基に「職務経歴要約」と「職務経歴詳細」を作成してください。\n\n# 職務経歴\n${historyText || '記載なし'}\n\n# キーワード\n${keywords}\n\n# パターン\n${pattern || 'default'}\n\nJSON形式で {"summary": "...", "details": "..."} のみを出力してください。`;
-    const result = await model.generateContent(prompt);
-    const text = await result.response.text();
-    let summary = '';
-    let details = '';
-    try {
-      const parsed = JSON.parse(text);
-      summary = parsed.summary || '';
-      details = parsed.details || '';
-    } catch {
-      summary = text;
+
+    const prompt = `
+あなたは日本の採用文書に精通したキャリアコンサルタントです。
+以下の「職歴（履歴書の原文）」を読み、職務経歴書の下書きを日本語で作成してください。
+
+# 重要要件
+- タイトルは出力しません。返答は本文のみ。
+- 返答はプレーンテキスト（コードブロックやJSONは禁止）。
+- 見出しは次の2つを必ず用意し、それぞれに本文を書いてください。
+  1) 職務経歴要約（3～6行）
+  2) 職務経歴詳細（プロジェクトごとに 箇条書きを推奨。役割/担当/実績 を明確に）
+- 「職務経歴要約」は履歴書の職歴の流れが分かるように、要約と強みを簡潔に。
+- 「職務経歴詳細」は、以下の粒度を参考に書いてください。
+  - 期間 / クライアント / 概要 / 役割 / 担当業務 / 実績（数値があれば明記）
+- キーワードが指定された場合は、文中に自然に織り込みます。
+
+# 履歴書の職歴（原文）
+${entries || '（職歴の記載が少ないため、ポテンシャルや取り組み姿勢が伝わるようにまとめてください）'}
+
+# 追加キーワード
+${keywords || '（特になし）'}
+
+# 出力フォーマット（厳守）
+職務経歴要約:
+（本文）
+
+職務経歴詳細:
+（本文）
+`.trim();
+
+    if (!API_KEY) {
+      return NextResponse.json(
+        { error: 'Gemini APIキーが未設定です' },
+        { status: 500 }
+      );
     }
-    return NextResponse.json({ summary, details });
-  } catch (error) {
-    console.error('Gemini APIエラー:', error);
+
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: MODEL });
+    const result = await model.generateContent(prompt);
+    const text = result?.response?.text() ?? '';
+
+    const summaryMatch = text.match(
+      /職務経歴要約:\s*([\s\S]*?)\n\s*職務経歴詳細:/
+    );
+    const detailsMatch = text.match(/職務経歴詳細:\s*([\s\S]*)$/);
+    const summaryText = (summaryMatch?.[1] || '').trim();
+    const detailsText = (detailsMatch?.[1] || '').trim();
+
+    return NextResponse.json({
+      summaryText,
+      detailsText,
+    });
+  } catch (e) {
+    console.error('generate-job error', e);
     return NextResponse.json(
-      { error: 'AI文章の生成中にエラーが発生しました。' },
+      { error: e.message || 'server error' },
       { status: 500 }
     );
   }
 }
+

@@ -4,51 +4,78 @@
 import React, { useState } from 'react';
 import { useResumeStore } from '@/store/resumeStore';
 
+function stripMarkdownFences(s = '') {
+  // ```json ... ``` や ``` ... ``` を除去
+  return s.replace(/```[\s\S]*?```/g, '').trim();
+}
+
+function tryExtractFromJson(text) {
+  const cleaned = stripMarkdownFences(text);
+  try {
+    const obj = JSON.parse(cleaned);
+    return {
+      summary: String(obj.summary ?? ''),
+      details: String(obj.details ?? ''),
+    };
+  } catch {
+    return { summary: cleaned, details: '' };
+  }
+}
+
 const JobPreview = React.forwardRef((props, ref) => {
   const {
+    histories,
     jobSummary,
     jobDetails,
-    histories,
-    licenses,
-    profile,
     updateJobSummary,
     updateJobDetails,
   } = useResumeStore();
 
-  const [keywords, setKeywords] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiError, setAiError] = useState('');
+  const [kw, setKw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
   const handleGenerate = async () => {
-    setIsGenerating(true);
-    setAiError('');
+    setBusy(true);
+    setErr('');
     try {
       const res = await fetch('/api/generate-job', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          keywords,
-          context: { histories, licenses, profile },
+          keywords: kw,
+          histories,
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'AIの生成に失敗しました。');
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || 'AI生成に失敗しました');
       }
       const data = await res.json();
-      updateJobSummary(data.summary || '');
-      updateJobDetails(data.details || '');
+      let summaryText = data.summaryText ?? data.text ?? '';
+      let detailsText = data.detailsText ?? '';
+      if (!detailsText) {
+        const extracted = tryExtractFromJson(summaryText);
+        summaryText = extracted.summary || summaryText;
+        detailsText = extracted.details || detailsText;
+      } else {
+        summaryText = stripMarkdownFences(summaryText);
+        detailsText = stripMarkdownFences(detailsText);
+      }
+      updateJobSummary(summaryText || '');
+      updateJobDetails(detailsText || '');
     } catch (e) {
-      setAiError(e.message || 'エラーが発生しました');
+      setErr(e.message || 'エラーが発生しました');
     } finally {
-      setIsGenerating(false);
+      setBusy(false);
     }
   };
 
   return (
-    <div className="resume-container job-preview" ref={ref}>
+    <div ref={ref} className="resume-container">
       <div className="title-row">
-        <h1>職務経歴書</h1>
+        <h1>職 務 経 歴 書</h1>
+        <div />
       </div>
 
       <div className="free-text-grid">
@@ -58,42 +85,44 @@ const JobPreview = React.forwardRef((props, ref) => {
           contentEditable
           suppressContentEditableWarning
           onBlur={(e) => updateJobSummary(e.currentTarget.innerText)}
-          data-placeholder="これまでの経験を簡潔にまとめましょう"
+          data-placeholder="履歴書の「職歴」をもとに概要が入ります（AI生成または手入力）"
         >
           {jobSummary}
         </div>
       </div>
 
-      <div className="free-text-grid" style={{ marginTop: 20 }}>
+      <div className="free-text-grid" style={{ marginTop: 10 }}>
         <div className="cell f-header">職務経歴詳細</div>
         <div
           className="cell f-content"
+          style={{ minHeight: 220 }}
           contentEditable
           suppressContentEditableWarning
           onBlur={(e) => updateJobDetails(e.currentTarget.innerText)}
-          data-placeholder="詳細な業務内容を記載しましょう"
+          data-placeholder="履歴書の「職歴」をもとに、担当業務・役割・実績などを詳述（AI生成または手入力）"
         >
           {jobDetails}
         </div>
       </div>
 
-      <div className="ai-controls" style={{ marginTop: 20 }}>
+      <div className="ai-controls">
         <input
           type="text"
-          value={keywords}
-          onChange={(e) => setKeywords(e.target.value)}
-          placeholder="下書きに入れたいキーワード"
           className="ai-keyword-input"
-          disabled={isGenerating}
+          placeholder="下書きに入れたいキーワード（例: ERP導入, DX, リーダー経験）"
+          value={kw}
+          onChange={(e) => setKw(e.target.value)}
+          disabled={busy}
         />
         <button
-          onClick={handleGenerate}
           className="ai-generate-btn"
-          disabled={isGenerating || !keywords}
+          onClick={handleGenerate}
+          disabled={busy}
+          title="履歴書の職歴を参照して要約と詳細を下書き生成"
         >
-          {isGenerating ? '生成中...' : 'AIで下書き生成'}
+          {busy ? '生成中…' : 'AIで職務経歴を生成'}
         </button>
-        {aiError && <p className="ai-error-message">{aiError}</p>}
+        {err && <p className="ai-error-message">{err}</p>}
       </div>
     </div>
   );
@@ -101,3 +130,4 @@ const JobPreview = React.forwardRef((props, ref) => {
 
 JobPreview.displayName = 'JobPreview';
 export default JobPreview;
+

@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { POST } from './route';
 
 describe('generate-job API', () => {
-  it('returns 400 when keywords missing', async () => {
+  it('returns 500 when API key missing', async () => {
     const req = new Request('http://localhost', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ keywords: 'test', histories: [] }),
     });
     const res = await POST(req);
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(500);
   });
 });
