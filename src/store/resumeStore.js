@@ -27,6 +27,8 @@ const initialResumeData = {
   motivation: '',
   selfPromotion: '',
   requests: '',
+  jobSummary: '',
+  jobDetails: '',
 
   // 証明写真（Base64 Data URL を想定）
   photoUrl: '',
@@ -106,6 +108,8 @@ export const useResumeStore = create(
       updateMotivation: (value) => set({ motivation: value }),
       updateSelfPromotion: (value) => set({ selfPromotion: value }),
       updateRequests: (value) => set({ requests: value }),
+      updateJobSummary: (value) => set({ jobSummary: value }),
+      updateJobDetails: (value) => set({ jobDetails: value }),
 
       // --- photo
       updatePhotoUrl: (dataUrl) => set({ photoUrl: dataUrl }),

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useId } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import ResumePreview from '@/components/ResumePreview';
+import JobPreview from '@/components/JobPreview';
 import { useResumeStore } from '@/store/resumeStore';
 
 export default function Home() {
@@ -82,7 +83,10 @@ export default function Home() {
 
       {/* 印刷対象 */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <ResumePreview ref={contentRef} />
+        <div ref={contentRef}>
+          <ResumePreview />
+          <JobPreview />
+        </div>
       </div>
     </main>
   );

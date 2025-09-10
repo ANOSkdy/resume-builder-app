@@ -319,6 +319,12 @@ body {
   gap: 10px;
   align-items: center;
 }
+
+.job-preview { margin-top: 40px; }
+
+@media print {
+  .job-preview { page-break-before: always; }
+}
 .ai-keyword-input {
   flex-grow: 1;
   padding: 8px 12px;
