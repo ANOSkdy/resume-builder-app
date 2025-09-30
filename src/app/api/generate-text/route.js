@@ -1,25 +1,27 @@
 import { NextResponse } from 'next/server';
-// Google AI SDKをインポート
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Geminiクライアントを初期化
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent';
+
+const extractTextFromCandidates = (candidates = []) =>
+  candidates
+    .flatMap(candidate => candidate?.content?.parts ?? [])
+    .map(part => part?.text ?? '')
+    .join('')
+    .trim();
 
 // POSTリクエストを処理する関数
 export async function POST(request) {
   try {
     // リクエストボディからキーワードと職歴コンテキストを取得
-    const { keywords, context } = await request.json();
+    const { keywords, context = {} } = await request.json();
 
     if (!keywords) {
       return NextResponse.json({ error: 'キーワードが入力されていません。' }, { status: 400 });
     }
 
-    // モデルを選択
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
     // 職歴情報を整形
-    const workHistoryText = context.histories
+    const histories = Array.isArray(context?.histories) ? context.histories : [];
+    const workHistoryText = histories
       .filter(h => h.type === 'entry' && h.description)
       .map(h => `${h.year}年${h.month}月 ${h.description}`)
       .join('\n');
@@ -36,11 +38,41 @@ export async function POST(request) {
       ${keywords}
     `;
 
-    // Gemini APIを呼び出して文章を生成
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const generatedText = response.text();
-    
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'Gemini APIキーが未設定です。' },
+        { status: 500 }
+      );
+    }
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }],
+          },
+        ],
+      }),
+    });
+
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      console.error('Gemini APIエラー:', payload?.error?.message ?? response.statusText);
+      return NextResponse.json(
+        { error: 'AI文章の生成中にエラーが発生しました。' },
+        { status: 500 }
+      );
+    }
+
+    const generatedText = extractTextFromCandidates(payload?.candidates);
+
     // 生成されたテキストをクライアントに返す
     return NextResponse.json({ generatedText });
 
