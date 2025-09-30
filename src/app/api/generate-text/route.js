@@ -16,7 +16,7 @@ export async function POST(request) {
     }
 
     // モデルを選択
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     // 職歴情報を整形
     const workHistoryText = context.histories
