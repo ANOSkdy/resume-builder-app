@@ -1,0 +1,113 @@
+{
+  "repo": "resume-builder-app",
+  "branch": "work",
+  "commit": "8df2a06f8e5175a2d46302f8913d91c53c7b9d47",
+  "summary": { "pass": 2, "warn": 1, "fail": 4 },
+  "findings": [
+    {
+      "id": "MODEL_VERSION",
+      "status": "fail",
+      "files": [
+        {
+          "path": "src/app/api/generate-text/route.js",
+          "line": 3,
+          "snippet": "const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent';"
+        },
+        {
+          "path": "src/app/api/generate-job/route.js",
+          "line": 6,
+          "snippet": "const MODEL = process.env.GOOGLE_GENAI_MODEL || 'gemini-1.5-flash';"
+        }
+      ],
+      "detail": "1.x 系モデル (gemini-pro, gemini-1.5-flash) を参照しており、2.5 系への移行が未対応。",
+      "recommendation": "環境変数とコードを更新して gemini-2.5-* モデルを使用し、旧モデルを除去する。"
+    },
+    {
+      "id": "REQUEST_FORMAT",
+      "status": "fail",
+      "files": [
+        {
+          "path": "src/app/api/generate-job/route.js",
+          "line": 68,
+          "snippet": "const result = await model.generateContent(prompt);"
+        }
+      ],
+      "detail": "SDK へ文字列のみを渡しており role/user の付与が保証されない。",
+      "recommendation": "generateContent 呼び出しで contents 配列と role: 'user' を明示し、400 を回避する。"
+    },
+    {
+      "id": "ENDPOINT_REGION",
+      "status": "pass",
+      "files": [
+        {
+          "path": "src/app/api/generate-text/route.js",
+          "line": 49,
+          "snippet": "const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {"
+        }
+      ],
+      "detail": "Studio API エンドポイント (generativelanguage.googleapis.com) を使用しており、リージョン指定の不整合は確認されない。",
+      "recommendation": "Vertex 経路追加時は locations/global を用いる。"
+    },
+    {
+      "id": "PROVIDER_SWITCH",
+      "status": "warn",
+      "files": [
+        {
+          "path": "src/app/api/generate-text/route.js",
+          "line": 41,
+          "snippet": "const apiKey = process.env.GEMINI_API_KEY;"
+        },
+        {
+          "path": "src/app/api/generate-job/route.js",
+          "line": 7,
+          "snippet": "const API_KEY =\n  process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;"
+        }
+      ],
+      "detail": "Studio API キー経路に固定されており、Vertex との切替ができない。",
+      "recommendation": "GEMINI_PROVIDER 等で Studio/Vertex を切替できる抽象化を導入する。"
+    },
+    {
+      "id": "AUTHORIZATION",
+      "status": "pass",
+      "files": [
+        {
+          "path": "src/app/api/generate-text/route.js",
+          "line": 41,
+          "snippet": "const apiKey = process.env.GEMINI_API_KEY;"
+        },
+        {
+          "path": "src/app/api/generate-job/route.js",
+          "line": 7,
+          "snippet": "const API_KEY =\n  process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;"
+        }
+      ],
+      "detail": "Studio API キーを参照し、未設定時にはエラーを返している。",
+      "recommendation": "Vertex 経路追加時は cloud-platform スコープの Bearer トークンを利用する。"
+    },
+    {
+      "id": "ERROR_HANDLING",
+      "status": "fail",
+      "files": [
+        {
+          "path": "src/app/api/generate-text/route.js",
+          "line": 66,
+          "snippet": "if (!response.ok) { ... return NextResponse.json({ error: 'AI文章の生成中にエラーが発生しました。' }, { status: 500 });"
+        },
+        {
+          "path": "src/app/api/generate-job/route.js",
+          "line": 83,
+          "snippet": "return NextResponse.json({ ok: false, ... error: e.message || 'server error' }, { status: 500 });"
+        }
+      ],
+      "detail": "HTTP ステータス別の診断が無く、404/403/400 の原因切り分けが困難。",
+      "recommendation": "レスポンスコードに応じたメッセージと再試行手順を実装する。"
+    },
+    {
+      "id": "ENV_CONFIGURATION",
+      "status": "fail",
+      "files": [],
+      "detail": "GEMINI_MODEL や GEMINI_PROVIDER などの推奨環境変数定義 (.env.example 等) が存在しない。",
+      "recommendation": "環境変数ファイルを整備し、2.5 系モデル・リージョン(global)・プロバイダー設定を明記する。"
+    }
+  ]
+}

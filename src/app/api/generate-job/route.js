@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const runtime = 'nodejs';
 
-const MODEL = process.env.GOOGLE_GENAI_MODEL || 'gemini-1.5-flash';
+const MODEL = process.env.GEMINI_MODEL || process.env.GOOGLE_GENAI_MODEL || 'gemini-2.5-flash';
 const API_KEY =
   process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
 
@@ -65,7 +65,14 @@ ${keywords || '（特になし）'}
 
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: MODEL });
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: String(prompt || '') }],
+        },
+      ],
+    });
     const text = result?.response?.text() ?? '';
 
     const summaryMatch = text.match(
@@ -83,6 +90,15 @@ ${keywords || '（特になし）'}
     return NextResponse.json({ ok: true, summary: summaryText, details: normalized });
   } catch (e) {
     console.error('generate-job error', e);
+    const status = Number(e?.status || e?.code || 500);
+    let message = e?.message || 'server error';
+    if (status === 400) {
+      message = 'リクエスト形式エラー（400）。contents/role の指定やパラメータを確認してください。';
+    } else if (status === 403) {
+      message = '認可エラー（403）。APIキーの権限・請求設定・利用制限を確認してください。';
+    } else if (status === 404) {
+      message = `モデル未検出（404）。MODEL=${MODEL} が有効か確認してください。`;
+    }
     return NextResponse.json(
       {
         ok: false,
@@ -91,10 +107,12 @@ ${keywords || '（特になし）'}
           company: c,
           detail: '',
         })),
-        error: e.message || 'server error',
+        error: message,
+        status,
       },
-      { status: 500 }
+      { status: Number.isFinite(status) ? status : 500 }
     );
   }
 }
+// TODO: Studio/Vertex の切替（GEMINI_PROVIDER）と GOOGLE_LOCATION=global の統一は将来対応
 

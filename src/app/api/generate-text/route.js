@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent`;
 
 const extractTextFromCandidates = (candidates = []) =>
   candidates
@@ -55,7 +56,7 @@ export async function POST(request) {
         contents: [
           {
             role: 'user',
-            parts: [{ text: prompt }],
+            parts: [{ text: String(prompt || '') }],
           },
         ],
       }),
@@ -64,11 +65,17 @@ export async function POST(request) {
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
+      const status = response.status;
+      let message = 'AI文章の生成に失敗しました。';
+      if (status === 400) {
+        message = 'リクエスト形式エラー（400）。入力内容（contents/role）やトークン長を確認してください。';
+      } else if (status === 403) {
+        message = '認可エラー（403）。APIキー/請求設定/利用制限を確認してください。';
+      } else if (status === 404) {
+        message = `モデル未検出（404）。MODEL=${MODEL} が有効か、モデル名の綴りを確認してください。`;
+      }
       console.error('Gemini APIエラー:', payload?.error?.message ?? response.statusText);
-      return NextResponse.json(
-        { error: 'AI文章の生成中にエラーが発生しました。' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: message, status }, { status });
     }
 
     const generatedText = extractTextFromCandidates(payload?.candidates);
@@ -81,3 +88,4 @@ export async function POST(request) {
     return NextResponse.json({ error: 'AI文章の生成中にエラーが発生しました。' }, { status: 500 });
   }
 }
+// TODO: 将来的に Vertex 経路を追加する場合は GOOGLE_LOCATION=global と OAuth/Bearer トークン対応を実装
